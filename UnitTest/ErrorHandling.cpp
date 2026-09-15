@@ -25,7 +25,7 @@ static sqlite3* SetupDB() {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(TEST_DB_FILE_ERR, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Create a dummy table
     async::sqlite3_exec(db, "CREATE TABLE err_test (id INT);", nullptr, nullptr, nullptr);
@@ -51,17 +51,17 @@ static void Test_Error_Syntax()
     int rc = async::sqlite3_exec(db, badSql, nullptr, nullptr, nullptr);
 
     // 2. Verify Return Code
-    ASSERT_TRUE(rc == SQLITE_ERROR);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ERROR);
 
     // 3. Verify Error Code API
     int errCode = async::sqlite3_errcode(db);
-    ASSERT_TRUE(errCode == SQLITE_ERROR);
+    DMQ_ASSERT_TRUE(errCode == SQLITE_ERROR);
 
     // 4. Verify Error Message API
     const char* errMsg = async::sqlite3_errmsg(db);
-    ASSERT_TRUE(errMsg != nullptr);
+    DMQ_ASSERT_TRUE(errMsg != nullptr);
     std::string errStr(errMsg);
-    ASSERT_TRUE(errStr.find("syntax error") != std::string::npos);
+    DMQ_ASSERT_TRUE(errStr.find("syntax error") != std::string::npos);
 
     TearDownDB(db);
     CleanupDB();
@@ -87,11 +87,11 @@ static void Test_Error_Extended()
     // Should return SQLITE_CONSTRAINT_PRIMARY (1555) instead of generic SQLITE_CONSTRAINT (19)
     // Note: The specific value depends on SQLite version, but checking it's NOT SQLITE_OK 
     // and is a constraint error is sufficient.
-    ASSERT_TRUE(rc != SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc != SQLITE_OK);
 
     int extErr = async::sqlite3_extended_errcode(db);
     // 1555 is SQLITE_CONSTRAINT_PRIMARY
-    ASSERT_TRUE(extErr == 1555 || extErr == SQLITE_CONSTRAINT);
+    DMQ_ASSERT_TRUE(extErr == 1555 || extErr == SQLITE_CONSTRAINT);
 
     TearDownDB(db);
     CleanupDB();
@@ -143,11 +143,11 @@ static void Test_Error_Timeout()
     // The call should have returned roughly after 100ms (not 2000ms!)
     // Tolerances: > 50ms and < 1500ms (allow loose upper bound for slow CI machines)
     std::cout << "Timeout Test Elapsed: " << elapsed << "ms" << std::endl;
-    ASSERT_TRUE(elapsed < 1800);
+    DMQ_ASSERT_TRUE(elapsed < 1800);
 
     // The wrapper returns the default return type on timeout. 
     // For `sqlite3_exec` (int), default is SQLITE_BUSY (mapped in AsyncInvoke special case).
-    ASSERT_TRUE(rc == SQLITE_BUSY);
+    DMQ_ASSERT_TRUE(rc == SQLITE_BUSY);
 
     TearDownDB(dbVictim);
     CleanupDB();
@@ -160,9 +160,9 @@ static void Test_Error_String()
 {
     // Verify static utility works
     const char* str = async::sqlite3_errstr(SQLITE_BUSY);
-    ASSERT_TRUE(str != nullptr);
+    DMQ_ASSERT_TRUE(str != nullptr);
     std::string s(str);
-    ASSERT_TRUE(s == "database is locked");
+    DMQ_ASSERT_TRUE(s == "database is locked");
 }
 
 // -----------------------------------------------------------------------------

@@ -29,20 +29,20 @@ static void Test_Mem_Lifecycle()
     // 1. Allocate Memory (128 bytes)
     // The call happens on worker thread, pointer returned to main thread.
     void* ptr = async::sqlite3_malloc(128);
-    ASSERT_TRUE(ptr != nullptr);
+    DMQ_ASSERT_TRUE(ptr != nullptr);
 
     // 2. Check Size
     // Verify the allocator knows about this pointer
     sqlite3_uint64 size = async::sqlite3_msize(ptr);
-    ASSERT_TRUE(size >= 128);
+    DMQ_ASSERT_TRUE(size >= 128);
 
     // 3. Reallocate (Expand to 256)
     // Note: realloc might move the pointer, so we capture the new one
     void* newPtr = async::sqlite3_realloc(ptr, 256);
-    ASSERT_TRUE(newPtr != nullptr);
+    DMQ_ASSERT_TRUE(newPtr != nullptr);
 
     size = async::sqlite3_msize(newPtr);
-    ASSERT_TRUE(size >= 256);
+    DMQ_ASSERT_TRUE(size >= 256);
 
     // 4. Free
     // Passes the pointer address back to worker thread for deallocation
@@ -59,10 +59,10 @@ static void Test_Mem_Alloc64()
     // Allocate a small amount using the 64-bit API
     // (Allocating actual >4GB would kill the test machine, so we test the API mapping)
     void* ptr = async::sqlite3_malloc64(1024);
-    ASSERT_TRUE(ptr != nullptr);
+    DMQ_ASSERT_TRUE(ptr != nullptr);
 
     sqlite3_uint64 size = async::sqlite3_msize(ptr);
-    ASSERT_TRUE(size >= 1024);
+    DMQ_ASSERT_TRUE(size >= 1024);
 
     async::sqlite3_free(ptr);
 }
@@ -77,7 +77,7 @@ static void Test_Str_Builder()
     // 1. Create a new string builder on the worker thread
     // Passing NULL db is allowed for generic string building
     sqlite3_str* s = async::sqlite3_str_new(nullptr);
-    ASSERT_TRUE(s != nullptr);
+    DMQ_ASSERT_TRUE(s != nullptr);
 
     // 2. Append pieces
     async::sqlite3_str_append(s, "Hello", 5);
@@ -86,15 +86,15 @@ static void Test_Str_Builder()
 
     // 3. Check Length
     int len = async::sqlite3_str_length(s);
-    ASSERT_TRUE(len == 11);
+    DMQ_ASSERT_TRUE(len == 11);
 
     // 4. Finish (Destroys builder, returns char*)
     char* result = async::sqlite3_str_finish(s);
-    ASSERT_TRUE(result != nullptr);
+    DMQ_ASSERT_TRUE(result != nullptr);
 
     // 5. Verify Content
     std::string resStr(result);
-    ASSERT_TRUE(resStr == "Hello World");
+    DMQ_ASSERT_TRUE(resStr == "Hello World");
 
     // 6. Cleanup result string
     async::sqlite3_free(result);
@@ -120,7 +120,7 @@ static void Test_Str_Reset()
 
     // Finish
     char* result = async::sqlite3_str_finish(s);
-    ASSERT_TRUE(std::string(result) == "Clean");
+    DMQ_ASSERT_TRUE(std::string(result) == "Clean");
 
     async::sqlite3_free(result);
 }
@@ -135,7 +135,7 @@ static void Test_Str_Status()
 
     // Check initial status
     int rc = async::sqlite3_str_errcode(s);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Finish empty (returns NULL or empty string depending on version, 
     // but finish calls finalize on the builder)

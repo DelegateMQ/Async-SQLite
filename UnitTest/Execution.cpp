@@ -24,8 +24,8 @@ static sqlite3* SetupDB() {
     // Ensure async system is running
     sqlite3_init_async();
     int rc = async::sqlite3_open(TEST_DB_FILE_EXEC, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(db != nullptr);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(db != nullptr);
     return db;
 }
 
@@ -85,7 +85,7 @@ static void Test_Exec_CreateAndInsert()
         std::cerr << "Create Error: " << (errMsg ? errMsg : "Unknown") << std::endl;
         async::sqlite3_free(errMsg);
     }
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 2. Insert Data
     const char* sqlInsert = "INSERT INTO users VALUES (1, 'Alice'); "
@@ -96,7 +96,7 @@ static void Test_Exec_CreateAndInsert()
         std::cerr << "Insert Error: " << (errMsg ? errMsg : "Unknown") << std::endl;
         async::sqlite3_free(errMsg);
     }
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     TearDownDB(db);
 }
@@ -127,13 +127,13 @@ static void Test_Exec_SelectCallback()
     rc = async::sqlite3_exec(db, selectSql, &TestCallback, &ctx, nullptr);
 
     // Verify Results
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(ctx.rowCount == 3);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(ctx.rowCount == 3);
 
-    ASSERT_TRUE(ctx.capturedNames.size() == 3);
-    ASSERT_TRUE(ctx.capturedNames[0] == "ItemA");
-    ASSERT_TRUE(ctx.capturedNames[1] == "ItemB");
-    ASSERT_TRUE(ctx.capturedNames[2] == "ItemC");
+    DMQ_ASSERT_TRUE(ctx.capturedNames.size() == 3);
+    DMQ_ASSERT_TRUE(ctx.capturedNames[0] == "ItemA");
+    DMQ_ASSERT_TRUE(ctx.capturedNames[1] == "ItemB");
+    DMQ_ASSERT_TRUE(ctx.capturedNames[2] == "ItemC");
 
     TearDownDB(db);
 }
@@ -156,7 +156,7 @@ static void Test_Exec_Abort()
     int rc = async::sqlite3_exec(db, "SELECT val FROM nums;", &AbortCallback, nullptr, nullptr);
 
     // SQLite should return SQLITE_ABORT
-    ASSERT_TRUE(rc == SQLITE_ABORT);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ABORT);
 
     TearDownDB(db);
 }
@@ -174,16 +174,16 @@ static void Test_Exec_Error()
     int rc = async::sqlite3_exec(db, badSql, nullptr, nullptr, &zErrMsg);
 
     // 1. Verify Error Code
-    ASSERT_TRUE(rc != SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc != SQLITE_OK);
 
     // 2. Verify Error Message was populated
     // Since &zErrMsg (char**) was passed to the worker thread, and SQLite allocated 
     // the string, the pointer value in zErrMsg should now point to that string.
-    ASSERT_TRUE(zErrMsg != nullptr);
+    DMQ_ASSERT_TRUE(zErrMsg != nullptr);
 
     std::string errStr(zErrMsg);
     // Simple check to ensure it contains relevant info
-    ASSERT_TRUE(errStr.find("no such table") != std::string::npos);
+    DMQ_ASSERT_TRUE(errStr.find("no such table") != std::string::npos);
 
     // 3. Free the error string using the Async API
     // (Crucial: Memory allocated by SQLite on worker thread should be freed via SQLite API)

@@ -57,7 +57,7 @@ static void Test_Future_Exec()
     try {
         int rc = f1.get(); // Wait for result
         if (rc != SQLITE_OK) std::cerr << "[Exec] Create Table Failed: " << rc << std::endl;
-        ASSERT_TRUE(rc == SQLITE_OK);
+        DMQ_ASSERT_TRUE(rc == SQLITE_OK);
     }
     catch (const std::future_error& e) {
         std::cerr << "[Exec] FATAL: Future Error: " << e.what() << " Code: " << e.code() << std::endl;
@@ -75,7 +75,7 @@ static void Test_Future_Exec()
 
     try {
         int rc = f2.get(); // Blocks here until done, ensuring 'sql' is still alive
-        ASSERT_TRUE(rc == SQLITE_OK);
+        DMQ_ASSERT_TRUE(rc == SQLITE_OK);
     }
     catch (const std::exception& e) {
         std::cerr << "[Exec] FATAL: Insert Failed: " << e.what() << std::endl;
@@ -86,7 +86,7 @@ static void Test_Future_Exec()
     int rowCount = 0;
     auto cb = [](void* p, int, char**, char**) { (*(int*)p)++; return 0; };
     async::sqlite3_exec(db, "SELECT * FROM test;", cb, &rowCount, nullptr);
-    ASSERT_TRUE(rowCount == 1);
+    DMQ_ASSERT_TRUE(rowCount == 1);
 
     CloseDB(db);
 }
@@ -106,7 +106,7 @@ static void Test_Future_Step()
 
     sqlite3_stmt* stmt = nullptr;
     async::sqlite3_prepare_v2(db, "SELECT id FROM step_test ORDER BY id;", -1, &stmt, nullptr);
-    ASSERT_TRUE(stmt != nullptr);
+    DMQ_ASSERT_TRUE(stmt != nullptr);
 
     // 1. Step Row 1 Async
     std::future<int> fStep1 = async::sqlite3_step_future(stmt);
@@ -115,29 +115,29 @@ static void Test_Future_Step()
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     int rc = fStep1.get();
-    ASSERT_TRUE(rc == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ROW);
 
     // Verify Value (Synchronous column access is fine after step completes)
     int val1 = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(val1 == 100);
+    DMQ_ASSERT_TRUE(val1 == 100);
 
     // 2. Step Row 2 Async
     std::future<int> fStep2 = async::sqlite3_step_future(stmt);
     rc = fStep2.get();
-    ASSERT_TRUE(rc == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ROW);
 
     int val2 = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(val2 == 200);
+    DMQ_ASSERT_TRUE(val2 == 200);
 
     // 3. Step Done Async
     std::future<int> fStep3 = async::sqlite3_step_future(stmt);
     rc = fStep3.get();
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     // 4. Finalize Async
     auto fFin = async::sqlite3_finalize_future(stmt);
     rc = fFin.get();
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     CloseDB(db);
 }
@@ -170,7 +170,7 @@ static void Test_Future_Timeout_Control()
 
     // Must wait for completion before 'slowSql' is destroyed!
     int rc = future.get();
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     CloseDB(db);
 }
@@ -193,14 +193,14 @@ static void Test_Future_Transaction()
 
     // Wait
     int rc = fCommit.get();
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Verify
     int count = 0;
     async::sqlite3_exec(db, "SELECT count(*) FROM trans;",
         [](void* p, int, char** argv, char**) { *(int*)p = std::stoi(argv[0]); return 0; },
         &count, nullptr);
-    ASSERT_TRUE(count == 1);
+    DMQ_ASSERT_TRUE(count == 1);
 
     CloseDB(db);
 }

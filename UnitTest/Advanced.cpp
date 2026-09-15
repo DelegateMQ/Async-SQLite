@@ -26,7 +26,7 @@ static sqlite3* OpenDB(const char* filename) {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(filename, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
     return db;
 }
 
@@ -57,8 +57,8 @@ static void Test_Adv_Serialize()
     // Serialize "main" database to a buffer (malloc'd by SQLite)
     unsigned char* buffer = async::sqlite3_serialize(dbSrc, "main", &size, 0);
 
-    ASSERT_TRUE(buffer != nullptr);
-    ASSERT_TRUE(size > 0);
+    DMQ_ASSERT_TRUE(buffer != nullptr);
+    DMQ_ASSERT_TRUE(size > 0);
 
     // 3. Setup Dest DB (In-Memory)
     sqlite3* dbDst = OpenDB(":memory:");
@@ -68,7 +68,7 @@ static void Test_Adv_Serialize()
     unsigned int flags = 1 | 2;
     int rc = async::sqlite3_deserialize(dbDst, "main", buffer, size, size, flags);
 
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 5. Verify Data in Dest
     int val = 0;
@@ -78,7 +78,7 @@ static void Test_Adv_Serialize()
         };
     async::sqlite3_exec(dbDst, "SELECT id FROM snap;", cb, &val, nullptr);
 
-    ASSERT_TRUE(val == 42);
+    DMQ_ASSERT_TRUE(val == 42);
 
     // Note: buffer is freed by sqlite3_deserialize due to FREEONCLOSE flag, 
     // or owned by dbDst. We don't free it manually here if success.
@@ -110,23 +110,23 @@ static void Test_Adv_Backup()
     // 3. Initialize Backup
     // Copies from pSrc "main" to pDest "main"
     sqlite3_backup* pBackup = async::sqlite3_backup_init(pDest, "main", pSrc, "main");
-    ASSERT_TRUE(pBackup != nullptr);
+    DMQ_ASSERT_TRUE(pBackup != nullptr);
 
     // 4. Step (Copy pages)
     // -1 copies all pages at once
     int rc = async::sqlite3_backup_step(pBackup, -1);
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     // 5. Finish
     rc = async::sqlite3_backup_finish(pBackup);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 6. Verify Dest Data
     int rowCount = 0;
     auto cb = [](void* p, int, char**, char**) { (*(int*)p)++; return 0; };
     async::sqlite3_exec(pDest, "SELECT * FROM backup_test;", cb, &rowCount, nullptr);
 
-    ASSERT_TRUE(rowCount == 2);
+    DMQ_ASSERT_TRUE(rowCount == 2);
 
     CloseDB(pDest);
     CloseDB(pSrc);
@@ -152,24 +152,24 @@ static void Test_Adv_BackupProgress()
 
     // 1. Create Table and Populate
     rc = async::sqlite3_exec(pSrc, "CREATE TABLE progress (x TEXT);", nullptr, nullptr, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     rc = async::sqlite3_exec(pSrc, "BEGIN;", nullptr, nullptr, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Insert 1000 rows (enough to generate ~15-20 pages)
     for (int i = 0; i < 1000; ++i) {
         rc = async::sqlite3_exec(pSrc, "INSERT INTO progress VALUES ('A long string to fill up database pages for backup testing...');", nullptr, nullptr, nullptr);
         if (rc != SQLITE_OK) break;
     }
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     rc = async::sqlite3_exec(pSrc, "COMMIT;", nullptr, nullptr, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 2. Initialize Backup
     sqlite3_backup* pBackup = async::sqlite3_backup_init(pDest, "main", pSrc, "main");
-    ASSERT_TRUE(pBackup != nullptr);
+    DMQ_ASSERT_TRUE(pBackup != nullptr);
 
     // -------------------------------------------------------------------------
     // CRITICAL FIX: Step 0
@@ -178,7 +178,7 @@ static void Test_Adv_BackupProgress()
     // Calling step with 0 pages locks the source and calculates the size 
     // without copying data.
     rc = async::sqlite3_backup_step(pBackup, 0);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 3. Check Total Pages
     int total = async::sqlite3_backup_pagecount(pBackup);
@@ -187,18 +187,18 @@ static void Test_Adv_BackupProgress()
         std::cerr << "Backup Page Count is still 0 after step(0)!" << std::endl;
         std::cerr << "Source Rows: 1000. DB Error: " << async::sqlite3_errmsg(pDest) << std::endl;
     }
-    ASSERT_TRUE(total > 0);
+    DMQ_ASSERT_TRUE(total > 0);
 
     // 4. Check Remaining (Should equal total at start)
     int remaining = async::sqlite3_backup_remaining(pBackup);
-    ASSERT_TRUE(remaining == total);
+    DMQ_ASSERT_TRUE(remaining == total);
 
     // 5. Step 1 Page (Actually copy data now)
     rc = async::sqlite3_backup_step(pBackup, 1);
 
     // Note: If the DB is very small, 1 page might finish it. 
     // So we accept OK (more to do) or DONE (finished).
-    ASSERT_TRUE(rc == SQLITE_OK || rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK || rc == SQLITE_DONE);
 
     // 6. Check Remaining Decreased
     int remainingAfter = async::sqlite3_backup_remaining(pBackup);
@@ -206,7 +206,7 @@ static void Test_Adv_BackupProgress()
     if (remainingAfter >= remaining) {
         std::cerr << "Progress stalled. Start: " << remaining << " End: " << remainingAfter << std::endl;
     }
-    ASSERT_TRUE(remainingAfter < remaining);
+    DMQ_ASSERT_TRUE(remainingAfter < remaining);
 
     // 7. Finish
     async::sqlite3_backup_finish(pBackup);

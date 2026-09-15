@@ -23,7 +23,7 @@ static sqlite3* SetupDB() {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(TEST_DB_FILE_STMT, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
     return db;
 }
 
@@ -47,17 +47,17 @@ static void Test_Stmt_Lifecycle_Basic()
     const char* sql = "CREATE TABLE test_lifecycle (id INT, data TEXT);";
     rc = async::sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
 
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(stmt != nullptr);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(stmt != nullptr);
 
     // 2. Step: Execute the statement
     // DDL statements return SQLITE_DONE on the first step
     rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     // 3. Finalize: Clean up memory on the worker thread
     rc = async::sqlite3_finalize(stmt);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     TearDownDB(db);
 }
@@ -80,36 +80,36 @@ static void Test_Stmt_SelectLoop()
 
     // 1. Prepare
     int rc = async::sqlite3_prepare_v2(db, query, -1, &stmt, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 2. Step Row 1
     rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ROW);
 
     // 3. Verify Columns (Row 1)
     int id = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(id == 10);
+    DMQ_ASSERT_TRUE(id == 10);
 
     const unsigned char* text = async::sqlite3_column_text(stmt, 1);
-    ASSERT_TRUE(text != nullptr);
+    DMQ_ASSERT_TRUE(text != nullptr);
     std::string name1(reinterpret_cast<const char*>(text));
-    ASSERT_TRUE(name1 == "Alice");
+    DMQ_ASSERT_TRUE(name1 == "Alice");
 
     // 4. Step Row 2
     rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(rc == SQLITE_ROW);
 
     // 5. Verify Columns (Row 2)
     id = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(id == 20);
+    DMQ_ASSERT_TRUE(id == 20);
 
     text = async::sqlite3_column_text(stmt, 1);
     std::string name2(reinterpret_cast<const char*>(text));
-    ASSERT_TRUE(name2 == "Bob");
+    DMQ_ASSERT_TRUE(name2 == "Bob");
 
     // 6. Step End
     rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     // 7. Finalize
     async::sqlite3_finalize(stmt);
@@ -133,16 +133,16 @@ static void Test_Stmt_Reset()
 
     // 2. Run First Time
     int rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     // 3. Reset (Reset puts the statement back to the beginning)
     // IMPORTANT: It does not clear bindings (tested in Group 4)
     rc = async::sqlite3_reset(stmt);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 4. Run Second Time
     rc = async::sqlite3_step(stmt);
-    ASSERT_TRUE(rc == SQLITE_DONE);
+    DMQ_ASSERT_TRUE(rc == SQLITE_DONE);
 
     async::sqlite3_finalize(stmt);
 
@@ -154,7 +154,7 @@ static void Test_Stmt_Reset()
         };
     async::sqlite3_exec(db, "SELECT * FROM counter;", countCb, &rowCount, nullptr);
 
-    ASSERT_TRUE(rowCount == 2);
+    DMQ_ASSERT_TRUE(rowCount == 2);
 
     TearDownDB(db);
 }
@@ -173,16 +173,16 @@ static void Test_Stmt_PrepareFail()
     int rc = async::sqlite3_prepare_v2(db, badSql, -1, &stmt, nullptr);
 
     // Should fail
-    ASSERT_TRUE(rc != SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc != SQLITE_OK);
     // stmt should be NULL on failure (usually, depends on specific SQLite version behavior, 
     // but wrapper should propagate it)
-    ASSERT_TRUE(stmt == nullptr);
+    DMQ_ASSERT_TRUE(stmt == nullptr);
 
     // Verify we can get the error message from the DB handle
     const char* errMsg = async::sqlite3_errmsg(db);
-    ASSERT_TRUE(errMsg != nullptr);
+    DMQ_ASSERT_TRUE(errMsg != nullptr);
     // Just ensure the string isn't empty
-    ASSERT_TRUE(std::string(errMsg).length() > 0);
+    DMQ_ASSERT_TRUE(std::string(errMsg).length() > 0);
 
     TearDownDB(db);
 }
@@ -203,13 +203,13 @@ static void Test_Stmt_ColumnMetadata()
     // However, Step IS required for Column Data.
 
     int colCount = async::sqlite3_column_count(stmt);
-    ASSERT_TRUE(colCount == 2);
+    DMQ_ASSERT_TRUE(colCount == 2);
 
     const char* name0 = async::sqlite3_column_name(stmt, 0);
-    ASSERT_TRUE(std::string(name0) == "my_num");
+    DMQ_ASSERT_TRUE(std::string(name0) == "my_num");
 
     const char* name1 = async::sqlite3_column_name(stmt, 1);
-    ASSERT_TRUE(std::string(name1) == "my_str");
+    DMQ_ASSERT_TRUE(std::string(name1) == "my_str");
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);

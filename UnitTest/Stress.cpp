@@ -27,7 +27,7 @@ static sqlite3* SetupDB() {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(STRESS_DB_FILE, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Create table for concurrent inserts
     async::sqlite3_exec(db, "CREATE TABLE stress_test (id INT, thread_id INT);", nullptr, nullptr, nullptr);
@@ -87,11 +87,11 @@ static void Test_Stress_SharedConnection()
     if (failCount > 0) {
         std::cerr << "Stress Test Failures: " << failCount << std::endl;
     }
-    ASSERT_TRUE(failCount == 0);
+    DMQ_ASSERT_TRUE(failCount == 0);
 
     // 2. Check total successful ops
     int expectedTotal = THREAD_COUNT * OPS_PER_THREAD;
-    ASSERT_TRUE(successCount == expectedTotal);
+    DMQ_ASSERT_TRUE(successCount == expectedTotal);
 
     // 3. Verify Database Integrity (Count actual rows)
     int dbRows = 0;
@@ -100,7 +100,7 @@ static void Test_Stress_SharedConnection()
         };
     async::sqlite3_exec(db, "SELECT count(*) FROM stress_test;", cb, &dbRows, nullptr);
 
-    ASSERT_TRUE(dbRows == expectedTotal);
+    DMQ_ASSERT_TRUE(dbRows == expectedTotal);
 
     TearDownDB(db);
 }

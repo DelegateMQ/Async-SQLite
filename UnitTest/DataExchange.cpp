@@ -25,7 +25,7 @@ static sqlite3* SetupDB() {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(TEST_DB_FILE_DATA, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Create a generic table for testing types
     const char* sql = "CREATE TABLE data_test ("
@@ -76,14 +76,14 @@ static void Test_Data_Integer()
     async::sqlite3_prepare_v2(db, selectSql, -1, &stmt, nullptr);
 
     // Row 1 (32-bit)
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
     int ret32 = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(ret32 == val32);
+    DMQ_ASSERT_TRUE(ret32 == val32);
 
     // Row 2 (64-bit)
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
     sqlite3_int64 ret64 = async::sqlite3_column_int64(stmt, 0);
-    ASSERT_TRUE(ret64 == val64);
+    DMQ_ASSERT_TRUE(ret64 == val64);
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);
@@ -110,11 +110,11 @@ static void Test_Data_Double()
     const char* selectSql = "SELECT val_real FROM data_test;";
     async::sqlite3_prepare_v2(db, selectSql, -1, &stmt, nullptr);
 
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
     double ret = async::sqlite3_column_double(stmt, 0);
 
     // Check reasonable precision
-    ASSERT_TRUE(std::fabs(ret - val) < 0.000000001);
+    DMQ_ASSERT_TRUE(std::fabs(ret - val) < 0.000000001);
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);
@@ -147,13 +147,13 @@ static void Test_Data_Text()
     const char* selectSql = "SELECT val_text FROM data_test;";
     async::sqlite3_prepare_v2(db, selectSql, -1, &stmt, nullptr);
 
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
 
     const unsigned char* retPtr = async::sqlite3_column_text(stmt, 0);
-    ASSERT_TRUE(retPtr != nullptr);
+    DMQ_ASSERT_TRUE(retPtr != nullptr);
 
     std::string retText(reinterpret_cast<const char*>(retPtr));
-    ASSERT_TRUE(retText == text);
+    DMQ_ASSERT_TRUE(retText == text);
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);
@@ -183,16 +183,16 @@ static void Test_Data_Blob()
     const char* selectSql = "SELECT val_blob FROM data_test;";
     async::sqlite3_prepare_v2(db, selectSql, -1, &stmt, nullptr);
 
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
 
     // Verify Size
     int bytes = async::sqlite3_column_bytes(stmt, 0);
-    ASSERT_TRUE(bytes == (int)blob.size());
+    DMQ_ASSERT_TRUE(bytes == (int)blob.size());
 
     // Verify Content
     const void* retPtr = async::sqlite3_column_blob(stmt, 0);
-    ASSERT_TRUE(retPtr != nullptr);
-    ASSERT_TRUE(std::memcmp(retPtr, blob.data(), bytes) == 0);
+    DMQ_ASSERT_TRUE(retPtr != nullptr);
+    DMQ_ASSERT_TRUE(std::memcmp(retPtr, blob.data(), bytes) == 0);
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);
@@ -218,15 +218,15 @@ static void Test_Data_NullAndTypes()
     const char* selectSql = "SELECT val_int FROM data_test;";
     async::sqlite3_prepare_v2(db, selectSql, -1, &stmt, nullptr);
 
-    ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
+    DMQ_ASSERT_TRUE(async::sqlite3_step(stmt) == SQLITE_ROW);
 
     // Check Type
     int type = async::sqlite3_column_type(stmt, 0);
-    ASSERT_TRUE(type == SQLITE_NULL);
+    DMQ_ASSERT_TRUE(type == SQLITE_NULL);
 
     // Retrieving value should be 0 for int
     int ret = async::sqlite3_column_int(stmt, 0);
-    ASSERT_TRUE(ret == 0);
+    DMQ_ASSERT_TRUE(ret == 0);
 
     async::sqlite3_finalize(stmt);
     TearDownDB(db);
@@ -245,7 +245,7 @@ static void Test_Data_NamedParams()
 
     // Get Index of ":myVal"
     int idx = async::sqlite3_bind_parameter_index(stmt, ":myVal");
-    ASSERT_TRUE(idx > 0);
+    DMQ_ASSERT_TRUE(idx > 0);
 
     // Bind using that index
     async::sqlite3_bind_int(stmt, idx, 777);
@@ -258,7 +258,7 @@ static void Test_Data_NamedParams()
     async::sqlite3_exec(db, "SELECT * FROM data_test WHERE val_int=777;",
         [](void* p, int, char**, char**) { (*(int*)p)++; return 0; }, &rowCount, nullptr);
 
-    ASSERT_TRUE(rowCount == 1);
+    DMQ_ASSERT_TRUE(rowCount == 1);
 
     TearDownDB(db);
 }
@@ -291,11 +291,11 @@ static void Test_Data_ClearBindings()
 
     // Row 1: 888
     async::sqlite3_step(check);
-    ASSERT_TRUE(async::sqlite3_column_int(check, 0) == 888);
+    DMQ_ASSERT_TRUE(async::sqlite3_column_int(check, 0) == 888);
 
     // Row 2: NULL (0 when fetched as int)
     async::sqlite3_step(check);
-    ASSERT_TRUE(async::sqlite3_column_type(check, 0) == SQLITE_NULL);
+    DMQ_ASSERT_TRUE(async::sqlite3_column_type(check, 0) == SQLITE_NULL);
 
     async::sqlite3_finalize(check);
     TearDownDB(db);

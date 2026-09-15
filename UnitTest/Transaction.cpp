@@ -24,7 +24,7 @@ static sqlite3* SetupDB() {
     sqlite3* db = nullptr;
     sqlite3_init_async();
     int rc = async::sqlite3_open(TEST_DB_FILE_TRANS, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Create a simple table
     async::sqlite3_exec(db, "CREATE TABLE trans_test (id INT);", nullptr, nullptr, nullptr);
@@ -47,22 +47,22 @@ static void Test_Trans_Commit()
 
     // 1. Begin
     int rc = async::sqlite3_exec_begin(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 2. Insert Data
     rc = async::sqlite3_exec(db, "INSERT INTO trans_test VALUES (1);", nullptr, nullptr, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 3. Commit
     rc = async::sqlite3_exec_commit(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 4. Verify Persistence
     int count = 0;
     auto countCb = [](void* p, int, char**, char**) { (*(int*)p)++; return 0; };
     async::sqlite3_exec(db, "SELECT * FROM trans_test WHERE id=1;", countCb, &count, nullptr);
 
-    ASSERT_TRUE(count == 1);
+    DMQ_ASSERT_TRUE(count == 1);
 
     TearDownDB(db);
     CleanupDB();
@@ -83,14 +83,14 @@ static void Test_Trans_Rollback()
 
     // 3. Rollback
     int rc = async::sqlite3_exec_rollback(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // 4. Verify Data is GONE
     int count = 0;
     auto countCb = [](void* p, int, char**, char**) { (*(int*)p)++; return 0; };
     async::sqlite3_exec(db, "SELECT * FROM trans_test WHERE id=999;", countCb, &count, nullptr);
 
-    ASSERT_TRUE(count == 0);
+    DMQ_ASSERT_TRUE(count == 0);
 
     TearDownDB(db);
     CleanupDB();
@@ -146,7 +146,7 @@ static void Test_Concurrency_Interrupt()
         // If the machine is super fast, it might finish 10M rows in 100ms. 
         // In a real fail case, result would be SQLITE_OK.
     }
-    ASSERT_TRUE(queryResult == SQLITE_INTERRUPT);
+    DMQ_ASSERT_TRUE(queryResult == SQLITE_INTERRUPT);
 
     TearDownDB(db);
     CleanupDB();
@@ -176,9 +176,9 @@ static void Test_Concurrency_BusyTimeout()
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     // 4. Verify
-    ASSERT_TRUE(rc == SQLITE_BUSY);
+    DMQ_ASSERT_TRUE(rc == SQLITE_BUSY);
     // Should have waited at least roughly the timeout (allow some jitter)
-    ASSERT_TRUE(elapsed >= 450);
+    DMQ_ASSERT_TRUE(elapsed >= 450);
 
     // Cleanup
     async::sqlite3_exec(db1, "COMMIT;", nullptr, nullptr, nullptr);

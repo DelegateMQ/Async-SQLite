@@ -24,10 +24,10 @@ static void Test_InitAndThread()
 
     // Verify thread is created
     dmq::os::Thread* thread = sqlite3_get_thread();
-    ASSERT_TRUE(thread != nullptr);
+    DMQ_ASSERT_TRUE(thread != nullptr);
 
     // Verify thread has a name (optional, but good sanity check)
-    ASSERT_TRUE(thread->GetThreadName() == "SQLite Thread");
+    DMQ_ASSERT_TRUE(thread->GetThreadName() == "SQLite Thread");
 }
 
 // -----------------------------------------------------------------------------
@@ -40,8 +40,8 @@ static void Test_OpenClose_File()
 
     // 1. Open a new database file
     rc = async::sqlite3_open(TEST_DB_FILE, &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(db != nullptr);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(db != nullptr);
 
     // 2. Verify connection works (sanity check via synchronous API or simple async check)
     // We can use a simple async exec or just check the handle is valid.
@@ -49,7 +49,7 @@ static void Test_OpenClose_File()
 
     // 3. Close the database
     rc = async::sqlite3_close(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     // Clean up file
     CleanupDB();
@@ -65,12 +65,12 @@ static void Test_OpenClose_Memory()
 
     // 1. Open in-memory DB
     rc = async::sqlite3_open(":memory:", &db);
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(db != nullptr);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(db != nullptr);
 
     // 2. Close
     rc = async::sqlite3_close(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 }
 
 // -----------------------------------------------------------------------------
@@ -84,12 +84,12 @@ static void Test_OpenV2()
     // 1. Open with Read/Write + Create flags
     int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
     rc = async::sqlite3_open_v2(TEST_DB_FILE, &db, flags, nullptr);
-    ASSERT_TRUE(rc == SQLITE_OK);
-    ASSERT_TRUE(db != nullptr);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(db != nullptr);
 
     // 2. Close v2
     rc = async::sqlite3_close_v2(db);
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 
     CleanupDB();
 }
@@ -110,7 +110,7 @@ static void Test_OpenFail()
     rc = async::sqlite3_open_v2(TEST_DB_FILE, &db, flags, nullptr);
 
     // Should fail (CantOpen)
-    ASSERT_TRUE(rc != SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc != SQLITE_OK);
     // db handle might be allocated even on failure (SQLite quirk), but usually null if totally failed
     if (db) {
         async::sqlite3_close(db);
@@ -126,7 +126,7 @@ static void Test_Shutdown()
     // It should be the last thing tested or handled carefully.
     // For this unit test, we verify it returns OK.
     int rc = async::sqlite3_shutdown();
-    ASSERT_TRUE(rc == SQLITE_OK);
+    DMQ_ASSERT_TRUE(rc == SQLITE_OK);
 }
 
 // -----------------------------------------------------------------------------
