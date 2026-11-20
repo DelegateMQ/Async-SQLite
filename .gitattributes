@@ -2,4 +2,3 @@
 SQLite/sqlite3.c linguist-vendored
 SQLite/sqlite3.h linguist-vendored
 SQLite/sqlite3ext.h linguist-vendored
-SQLite/shell.c linguist-vendored

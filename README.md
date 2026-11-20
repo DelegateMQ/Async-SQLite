@@ -63,12 +63,22 @@ By implementing the Serialized Command Processor pattern, this library solves SQ
 * <a href="https://www.sqlite.org/">SQLite</a> - SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine.
 
 # Getting Started
-[CMake](https://cmake.org/) is used to create the project build files on any Windows or Linux machine.
+[CMake](https://cmake.org/) 3.16 or newer is used to create the project build files on any Windows or Linux machine.
 
 1. Clone the repository.
 2. From the repository root, run the following CMake command:   
-   `cmake -B Build .`
-3. Build and run the project within the `Build` directory. 
+   `cmake -B build .`
+3. Build and run the project within the `build` directory. 
+
+## Dependencies
+
+* **SQLite 3.54.1** is included in `SQLite/` (the official single-file amalgamation: `sqlite3.c`, `sqlite3.h`, `sqlite3ext.h`).
+* **DelegateMQ** is fetched from GitHub by CMake's `FetchContent` when CMake configures, at the release tag set by `DMQ_GIT_TAG` in `CMakeLists.txt` (currently `v2.4.1`). The wrapper links the `DelegateMQ::DelegateMQ` target. Options:
+  * Another release: `cmake -B build . -DDMQ_GIT_TAG=<tag>`
+  * A local DelegateMQ checkout instead of GitHub: `-DFETCHCONTENT_SOURCE_DIR_DELEGATEMQ=<path>`
+  * No network after the first configure: `-DFETCHCONTENT_FULLY_DISCONNECTED=ON`
+
+To use the wrapper in your own project, add `SQLite/` to your build and add DelegateMQ as described in its [build guide](https://github.com/DelegateMQ/DelegateMQ/blob/master/docs/BUILD.md). 
 
 # Delegate Quick Start
 
