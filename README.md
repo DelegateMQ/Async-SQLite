@@ -73,7 +73,7 @@ By implementing the Serialized Command Processor pattern, this library solves SQ
 ## Dependencies
 
 * **SQLite 3.54.1** is included in `SQLite/` (the official single-file amalgamation: `sqlite3.c`, `sqlite3.h`, `sqlite3ext.h`).
-* **DelegateMQ** is fetched from GitHub by CMake's `FetchContent` when CMake configures, at the release tag set by `DMQ_GIT_TAG` in `CMakeLists.txt` (currently `v2.4.1`). The wrapper links the `DelegateMQ::DelegateMQ` target. Options:
+* **DelegateMQ** is fetched from GitHub by CMake's `FetchContent` when CMake configures, at the release tag set by `DMQ_GIT_TAG` in `CMakeLists.txt` (currently `v3.0.0`). The wrapper links the `DelegateMQ::DelegateMQ` target. Options:
   * Another release: `cmake -B build . -DDMQ_GIT_TAG=<tag>`
   * A local DelegateMQ checkout instead of GitHub: `-DFETCHCONTENT_SOURCE_DIR_DELEGATEMQ=<path>`
   * No network after the first configure: `-DFETCHCONTENT_FULLY_DISCONNECTED=ON`
